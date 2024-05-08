@@ -65,6 +65,42 @@ def create_user():
         'email': new_user.email
     }), 201
 
+@app.route("/users/<int:position>", methods=["GET"])
+def get_user(position):
+    user = User.query.get(position)
+    return jsonify(user.serialize()), 200
+
+@app.route("/users/<int:position>", methods=["DELETE"])
+def delete_user(position):
+    user = User.query.get(position)
+
+    if not user: return jsonify({'error': 'not found'}), 404
+
+    db.session.delete(user)
+    db.session.commit()
+
+    return jsonify({'message': 'deleted successfully'}), 200
+
+@app.route("/users/<int:position>", methods=["PUT"])
+def update_user(position):
+    user = User.query.get(position)
+
+    if not user: return jsonify({'error': 'not found'}), 404
+
+    data = request.json
+    new_username = data.get('username')
+    new_email = data.get('email')
+    new_password = data.get('password')
+
+    if new_username: user.username = new_username
+    if new_email: user.email = new_email
+    if new_password: user.password = new_password
+
+    db.session.commit()
+
+    return jsonify(user.serialize()), 200
+
+
 # this only runs if `$ python src/app.py` is executed
 if __name__ == '__main__':
     PORT = int(os.environ.get('PORT', 3000))
