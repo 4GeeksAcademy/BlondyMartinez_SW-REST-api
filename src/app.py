@@ -36,6 +36,22 @@ def handle_invalid_usage(error):
 def sitemap():
     return generate_sitemap(app)
 
+# ENDPOINTS:
+#
+#  /users -> methods: get, post
+#  /users/int -> methods: get, post, edit, delete
+#  /users/int/favorites -> methods: get
+#  /users/int/favorites/planets -> methods: get, post
+#  /users/int/favorites/planets/int -> methods: delete
+#  /users/int/favorites/characters -> methods: get
+#  /users/int/favorites/characters/int -> methods: delete
+#
+#  /planets -> methods: get, post
+#  /planets/int -> methods: get, post, edit, delete
+#
+#  /characters -> methods: get, post
+#  /characters/int -> methods: get, post, edit, delete
+
 # users below
 @app.route('/users', methods=['GET'])
 def get_users():
@@ -229,6 +245,82 @@ def update_planet(position):
     db.session.commit()
 
     return jsonify(planet.serialize()), 200
+
+#favorite stuff below
+@app.route('/users/<int:position>/favorites', methods=["GET"])
+def get_fav(position):
+    favorite_planets = FavoritePlanet.query.filter_by(user_id=position).all()
+    favorite_characters = FavoriteCharacter.query.filter_by(user_id=position).all()
+    
+    favorites = favorite_planets + favorite_characters
+    
+    serialized_favorites = [favorite.serialize() for favorite in favorites]
+    
+    return jsonify(serialized_favorites), 200
+
+@app.route('/users/<int:position>/favorites/characters', methods=["GET"])
+def get_fav_char(position):
+    favorite_characters = FavoriteCharacter.query.filter_by(user_id=position).all()
+    serialized_favorites = [favorite.serialize() for favorite in favorite_characters]
+    
+    return jsonify(serialized_favorites), 200
+
+@app.route('/users/<int:position>/favorites/characters', methods=["POST"])
+def add_fav_char(position):
+    data = request.json
+    character_id = data.get('character_id')
+    existing_character = Character.query.filter_by(id=character_id).first()
+    if not existing_character: return jsonify({'error': 'character with provided id does not exist'}), 400
+
+    new_fav = FavoriteCharacter(character_id=character_id, user_id=position)
+    
+    db.session.add(new_fav)
+    db.session.commit()
+    
+    return jsonify(new_fav.serialize()), 201
+
+@app.route('/users/<int:position>/favorites/characters/<int:index>', methods=["DELETE"])
+def delete_fav_char(index):
+    fav = FavoriteCharacter.query.get(index)
+
+    if not fav: return jsonify({'error': 'not found'}), 404
+
+    db.session.delete(fav)
+    db.session.commit()
+
+    return jsonify({'message': 'deleted successfully'}), 200
+
+@app.route('/users/<int:position>/favorites/planets', methods=["GET"])
+def get_fav_planet(position):
+    favorite_planets = FavoritePlanet.query.filter_by(user_id=position).all()
+    serialized_favorites = [favorite.serialize() for favorite in favorite_planets]
+    
+    return jsonify(serialized_favorites), 200
+
+@app.route('/users/<int:position>/favorites/planets', methods=["POST"])
+def add_fav_planet(position):
+    data = request.json
+    planet_id = data.get('planet_id')
+    existing_planet = Planet.query.filter_by(id=planet_id).first()
+    if not existing_planet: return jsonify({'error': 'planet with provided id does not exist'}), 400
+
+    new_fav = FavoritePlanet(planet_id=planet_id, user_id=position)
+    
+    db.session.add(new_fav)
+    db.session.commit()
+    
+    return jsonify(new_fav.serialize()), 201
+
+@app.route('/users/<int:position>/favorites/planets/<int:index>', methods=["DELETE"])
+def delete_fav_planet(index):
+    fav = FavoritePlanet.query.get(index)
+
+    if not fav: return jsonify({'error': 'not found'}), 404
+
+    db.session.delete(fav)
+    db.session.commit()
+
+    return jsonify({'message': 'deleted successfully'}), 200
 
 # this only runs if `$ python src/app.py` is executed
 if __name__ == '__main__':
