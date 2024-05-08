@@ -100,6 +100,78 @@ def update_user(position):
 
     return jsonify(user.serialize()), 200
 
+# characters below
+@app.route('/characters', methods=['GET'])
+def get_characters():
+    all_characters = list(map(lambda character: character.serialize(), Character.query.all()))
+    return jsonify(all_characters), 200
+
+@app.route('/characters', methods=["POST"]) 
+def create_character():
+    data = request.json
+    name = data.get('name')
+    homeworld_id = data.get('homeworld')
+
+    if not name or not homeworld_id: return jsonify({'error': 'missing field'}), 400
+    
+    homeworld = Planet.query.get(homeworld_id)
+
+    if not homeworld: return jsonify({'error': 'invalid homeworld id'}), 400
+
+    existing_character = Character.query.filter_by(name=name).first()
+    if existing_character: return jsonify({'error': 'character is already on the database'}), 400
+
+    new_character = Character(name=name, homeworld_id=homeworld_id)
+
+    db.session.add(new_character)
+    db.session.commit()
+
+    return jsonify({
+        'id': new_character.id,
+        'name': new_character.name,
+        'homeworld_id': new_character.homeworld_id,
+        'homeworld': homeworld.name,
+    }), 201
+
+@app.route("/characters/<int:position>", methods=["GET"])
+def get_character(position):
+    character = Character.query.get(position)
+    if character: return jsonify(character.serialize()), 200
+    else: return jsonify({'error': 'not found'}), 404
+
+@app.route("/characters/<int:position>", methods=["DELETE"])
+def delete_character(position):
+    character = Character.query.get(position)
+
+    if not character: return jsonify({'error': 'not found'}), 404
+
+    db.session.delete(character)
+    db.session.commit()
+
+    return jsonify({'message': 'deleted successfully'}), 200
+
+@app.route("/characters/<int:position>", methods=["PUT"])
+def update_character(position):
+    character = Character.query.get(position)
+
+    if not character: return jsonify({'error': 'not found'}), 404
+
+    data = request.json
+    new_name = data.get('name')
+    new_homeworld_id = data.get('homeworld')
+
+    existing_character = Character.query.filter_by(name=new_name).first()
+    if existing_character: return jsonify({'error': 'character with that name is already on the database'}), 400
+
+    homeworld = Planet.query.get(new_homeworld_id)
+    if new_homeworld_id and not homeworld: return jsonify({'error': 'invalid homeworld id'}), 400
+
+    if new_name: character.name = new_name
+    if new_homeworld_id: character.homeworld_id = new_homeworld_id
+
+    db.session.commit()
+
+    return jsonify(character.serialize()), 200
 
 # this only runs if `$ python src/app.py` is executed
 if __name__ == '__main__':
