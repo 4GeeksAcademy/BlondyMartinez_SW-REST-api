@@ -39,7 +39,7 @@ def sitemap():
 # ENDPOINTS:
 #
 #  /users -> methods: get, post
-#  /users/int -> methods: get, post, edit, delete
+#  /users/int -> methods: get, put, delete
 #  /users/int/favorites -> methods: get
 #  /users/int/favorites/planets -> methods: get, post
 #  /users/int/favorites/planets/int -> methods: delete
@@ -47,10 +47,10 @@ def sitemap():
 #  /users/int/favorites/characters/int -> methods: delete
 #
 #  /planets -> methods: get, post
-#  /planets/int -> methods: get, post, edit, delete
+#  /planets/int -> methods: get, put, delete
 #
 #  /characters -> methods: get, post
-#  /characters/int -> methods: get, post, edit, delete
+#  /characters/int -> methods: get, put, delete
 
 # users below
 @app.route('/users', methods=['GET'])
