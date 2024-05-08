@@ -173,6 +173,63 @@ def update_character(position):
 
     return jsonify(character.serialize()), 200
 
+# planets below
+@app.route('/planets', methods=['GET'])
+def get_planets():
+    all_planets = list(map(lambda planet: planet.serialize(), Planet.query.all()))
+    return jsonify(all_planets), 200
+
+@app.route('/planets', methods=["POST"]) 
+def create_planet():
+    data = request.json
+    name = data.get('name')
+
+    if not name: return jsonify({'error': 'missing field'}), 400
+
+    existing_planet = Planet.query.filter_by(name=name).first()
+    if existing_planet: return jsonify({'error': 'planet already exists in the database'}), 400
+
+    new_planet = Planet(name=name)
+
+    db.session.add(new_planet)
+    db.session.commit()
+
+    return jsonify({
+        'id': new_planet.id,
+        'name': new_planet.name,
+    }), 201
+
+@app.route("/planets/<int:position>", methods=["GET"])
+def get_planet(position):
+    planet = Planet.query.get(position)
+    return jsonify(planet.serialize()), 200
+
+@app.route("/planets/<int:position>", methods=["DELETE"])
+def delete_planet(position):
+    planet = Planet.query.get(position)
+
+    if not planet: return jsonify({'error': 'not found'}), 404
+
+    db.session.delete(planet)
+    db.session.commit()
+
+    return jsonify({'message': 'deleted successfully'}), 200
+
+@app.route("/planets/<int:position>", methods=["PUT"])
+def update_planet(position):
+    planet = Planet.query.get(position)
+
+    if not planet: return jsonify({'error': 'not found'}), 404
+
+    data = request.json
+    new_name = data.get('name')
+
+    if new_name: planet.name = new_name
+
+    db.session.commit()
+
+    return jsonify(planet.serialize()), 200
+
 # this only runs if `$ python src/app.py` is executed
 if __name__ == '__main__':
     PORT = int(os.environ.get('PORT', 3000))
