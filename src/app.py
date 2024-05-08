@@ -43,7 +43,7 @@ def sitemap():
 #  /users/int/favorites -> methods: get
 #  /users/int/favorites/planets -> methods: get, post
 #  /users/int/favorites/planets/int -> methods: delete
-#  /users/int/favorites/characters -> methods: get
+#  /users/int/favorites/characters -> methods: get, post
 #  /users/int/favorites/characters/int -> methods: delete
 #
 #  /planets -> methods: get, post
