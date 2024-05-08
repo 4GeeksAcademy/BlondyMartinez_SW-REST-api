@@ -8,7 +8,7 @@ from flask_swagger import swagger
 from flask_cors import CORS
 from utils import APIException, generate_sitemap
 from admin import setup_admin
-from models import db, User
+from models import db, User, Planet, Character, FavoriteCharacter, FavoritePlanet
 #from models import Person
 
 app = Flask(__name__)
@@ -36,14 +36,34 @@ def handle_invalid_usage(error):
 def sitemap():
     return generate_sitemap(app)
 
-@app.route('/user', methods=['GET'])
-def handle_hello():
+# users below
+@app.route('/users', methods=['GET'])
+def get_users():
+    all_users = list(map(lambda user: user.serialize(), User.query.all()))
+    return jsonify(all_users), 200
 
-    response_body = {
-        "msg": "Hello, this is your GET /user response "
-    }
+@app.route('/users', methods=["POST"]) 
+def create_user():
+    data = request.json
+    username = data.get('username')
+    email = data.get('email')
+    password = data.get('password')
 
-    return jsonify(response_body), 200
+    if not username or not email or not password: return jsonify({'error': 'missing field'}), 400
+
+    existing_user = User.query.filter_by(email=email).first()
+    if existing_user: return jsonify({'error': 'email is already in use'}), 400
+
+    new_user = User(username=username, email=email, password=password)
+
+    db.session.add(new_user)
+    db.session.commit()
+
+    return jsonify({
+        'id': new_user.id,
+        'username': new_user.username,
+        'email': new_user.email
+    }), 201
 
 # this only runs if `$ python src/app.py` is executed
 if __name__ == '__main__':
