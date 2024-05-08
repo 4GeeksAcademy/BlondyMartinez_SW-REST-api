@@ -43,6 +43,7 @@ class User(db.Model):
     def serialize(self):
         return {
             "id": self.id,
+            "name": self.username,
             "email": self.email,
         }
     
